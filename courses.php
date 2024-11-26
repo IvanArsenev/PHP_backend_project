@@ -198,27 +198,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         if ($course) {
             $data = json_decode(file_get_contents('php://input'), true);
             if ($urlParts[count($urlParts) - 1] == "sign-up") {
-                $stmt = $pdo->prepare("SELECT COUNT(*) FROM teachers WHERE courseGuid = :courseGuid AND userGuid = :userGuid");
-                $stmt->execute(['courseGuid' => $courseGuid, 'userGuid' => $user['userGuid']]);
-                if ($stmt->fetchColumn() > 0 or $course['mainTeacherId'] == $user['userGuid'] or $user['admin'] == true) {
-                    http_response_code(400);
-                    echo json_encode(["error" => "Пользователь является преподавателем данного курса"]);
-                    exit;
-                } else {
-                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM students WHERE courseGuid = :courseGuid AND userGuid = :userGuid");
+                if ($course['status'] == "OpenForAssigning") {
+                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM teachers WHERE courseGuid = :courseGuid AND userGuid = :userGuid");
                     $stmt->execute(['courseGuid' => $courseGuid, 'userGuid' => $user['userGuid']]);
-                    if ($stmt->fetchColumn() > 0) {
+                    if ($stmt->fetchColumn() > 0 or $course['mainTeacherId'] == $user['userGuid'] or $user['admin'] == true) {
                         http_response_code(400);
-                        echo json_encode(["error" => "Пользователь уже подал заявку на курс"]);
+                        echo json_encode(["error" => "Пользователь является преподавателем данного курса"]);
                         exit;
                     } else {
-                        $stmt = $pdo->prepare("
-                            INSERT INTO students (userGuid, courseGuid, status)
-                            VALUES (?, ?, ?)
-                        ");
-                        $stmt->execute([$user['userGuid'], $courseGuid, 'InQueue']);
-                        echo json_encode(["message" => "Заявка на курс отправлена"]);
+                        $stmt = $pdo->prepare("SELECT COUNT(*) FROM students WHERE courseGuid = :courseGuid AND userGuid = :userGuid");
+                        $stmt->execute(['courseGuid' => $courseGuid, 'userGuid' => $user['userGuid']]);
+                        if ($stmt->fetchColumn() > 0) {
+                            http_response_code(400);
+                            echo json_encode(["error" => "Пользователь уже подал заявку на курс"]);
+                            exit;
+                        } else {
+                            $stmt = $pdo->prepare("
+                                INSERT INTO students (userGuid, courseGuid, status)
+                                VALUES (?, ?, ?)
+                            ");
+                            $stmt->execute([$user['userGuid'], $courseGuid, 'InQueue']);
+                            echo json_encode(["message" => "Заявка на курс отправлена"]);
+                        }
                     }
+                } else {
+                    http_response_code(400);
+                    echo json_encode(["message" => "Запись на курс в данный момент недоступна"]);
+                    exit;
                 }
             } else if (empty($data)) {
                 echo json_encode(["error" => "В POST запросе должно быть тело запроса"]);
@@ -328,7 +334,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                             exit;
                         } else {
                             $stmt = $pdo->prepare("
-                                INSERT INTO notifications (userGuid, courseGuid)
+                                INSERT INTO teachers (userGuid, courseGuid)
                                 VALUES (?, ?)
                             ");
                             $stmt->execute([$data['userId'], $courseGuid]);
@@ -403,7 +409,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                     $stmt->execute(['courseGuid' => $courseGuid, 'userGuid' => $user['userGuid']]);
                     if ($stmt->fetchColumn() > 0 or $course['mainTeacherId'] == $user['userGuid'] or $user['admin'] == true) {
                         if ($data['markType'] == 'Midterm' or $data['markType'] == 'Final') {
-                            if (is_numeric($data['mark']) and $data['mark'] >= 0.0 and $data['mark'] <= 5.3) {
+                            if ($data['mark'] == 'NotDefined' or $data['mark'] == 'Passed' or $data['mark'] == 'Failed') {
                                 if ($data['markType'] == 'Midterm') {
                                     $sql = "UPDATE `students` SET midtermResult = ? WHERE `courseGuid` = ? AND `userGuid` = ?";
                                     $stmt = $pdo->prepare($sql);
@@ -421,7 +427,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                                 }
                             } else {
                                 http_response_code(400);
-                                echo json_encode(["error" => "mark может принимать значения от 0.0 до 5.3"]);
+                                echo json_encode(["error" => "mark может принимать значения 'NotDefined', 'Passed', 'Failed'"]);
                                 exit;
                             }
                         } else {
@@ -454,11 +460,191 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         echo json_encode(["message" => "Такого эндпоинта не существует или у Вас нет прав!"]);
         exit;
     }
-
 } else if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
-
+    $urlParts = explode('/', $_SERVER['REQUEST_URI']);
+    if (count($urlParts) == 4) {
+        $courseGuid = $urlParts[count($urlParts) - 2];
+    } else {
+        $courseGuid = $urlParts[count($urlParts) - 1];
+    }
+    $stmt = $pdo->prepare("SELECT * FROM courses WHERE courseGuid = :courseGuid");
+    $stmt->execute(['courseGuid' => $courseGuid]);
+    $course = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($course) {
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (empty($data)) {
+            echo json_encode(["error" => "В POST запросе должно быть тело запроса"]);
+        } else {
+            if (count($urlParts) == 4 and $urlParts[count($urlParts) - 1] == "requirements-and-annotations") {
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM teachers WHERE courseGuid = :courseGuid AND userGuid = :userGuid");
+                $stmt->execute(['courseGuid' => $courseGuid, 'userGuid' => $user['userGuid']]);
+                if ($stmt->fetchColumn() > 0 or $course['mainTeacherId'] == $user['userGuid'] or $user['admin'] == true) {
+                    $requirements = $data['requirements'] ?? null;
+                    $annotations = $data['annotations'] ?? null;
+                    $errors = [];
+                    if (strlen($requirements)>1023) {
+                        $errors[] = "Поле требования не может быть длинее 1023 символов.";
+                    }
+                    if (strlen($annotations)>1023) {
+                        $errors[] = "Поле аннотации не может быть длинее 1023 символов.";
+                    }
+                    if ($errors) {
+                        http_response_code(400);
+                        echo json_encode(["errors" => $errors]);
+                        exit;
+                    }
+                    if (!$requirements and !$annotations) {
+                        http_response_code(400);
+                        echo json_encode(["errors" => "Выберите параметры для изменения (requirements или annotations)"]);
+                        exit;
+                    } else if (!$requirements) {
+                        $sql = "UPDATE `courses` SET `annotations` = ? WHERE `courseGuid` = ?";
+                        $stmt = $pdo->prepare($sql);
+                        $stmt->execute([$data['annotations'], $courseGuid]);
+                        if ($stmt->rowCount() > 0) {
+                            echo json_encode(["message" => "Аннотации успешно обновлены."]);
+                        } else {
+                            http_response_code(400);
+                            echo json_encode(["error" => "Не удалось обновить данные. Курс не найден или данные не изменены."]);
+                        }
+                    } else if (!$annotations) {
+                        $sql = "UPDATE `courses` SET `requirements` = ? WHERE `courseGuid` = ?";
+                        $stmt = $pdo->prepare($sql);
+                        $stmt->execute([$data['requirements'], $courseGuid]);
+                        if ($stmt->rowCount() > 0) {
+                            echo json_encode(["message" => "Требования успешно обновлены."]);
+                        } else {
+                            http_response_code(400);
+                            echo json_encode(["error" => "Не удалось обновить данные. Курс не найден или данные не изменены."]);
+                        }
+                    } else {
+                        $sql = "UPDATE `courses` SET `requirements` = ?, `annotations` = ? WHERE `courseGuid` = ?";
+                        $stmt = $pdo->prepare($sql);
+                        $stmt->execute([$data['requirements'], $data['annotations'], $courseGuid]);
+                        if ($stmt->rowCount() > 0) {
+                            echo json_encode(["message" => "Требования и аннотации успешно обновлены."]);
+                        } else {
+                            http_response_code(400);
+                            echo json_encode(["error" => "Не удалось обновить данные. Курс не найден или данные не изменены."]);
+                        }
+                    }
+                } else {
+                    http_response_code(404);
+                    echo json_encode(["message" => "Такого эндпоинта не существует или у Вас нет прав!"]);
+                    exit;
+                }
+            } else if (count($urlParts) == 3) {
+                if ($user['admin'] == true) {
+                    $name = $data['name'] ?? null;
+                    $startYear = $data['startYear'] ?? null;
+                    $maximumStudentsCount = $data['maximumStudentsCount'] ?? null;
+                    $semester = $data['semester'] ?? null;
+                    $requirements = $data['requirements'] ?? null;
+                    $annotations = $data['annotations'] ?? null;
+                    $mainTeacherId = $data['mainTeacherId'] ?? null;
+                    $errors = [];
+                    if (!$name) $errors[] = "Поле имя обязательно.";
+                    if (!$startYear) $errors[] = "Дата начала курса обязательна.";
+                    if (!$maximumStudentsCount) $errors[] = "Укажите максимальное количество студентов.";
+                    if (!$semester) $errors[] = "Поле семестр обязательно.";
+                    if (!$requirements) $errors[] = "Поле требования обязательно.";
+                    if (!$annotations) $errors[] = "Поле аннотации обязательно.";
+                    if (!$mainTeacherId) $errors[] = "Укажите основного преподавателя.";
+                    $currentYear = (int)date('Y'); 
+                    if (!filter_var($startYear, FILTER_VALIDATE_INT) || $startYear < $currentYear) {
+                        $errors[] = "Поле дата начала курса можеть быть годом, начиная от текущего.";
+                    }
+                    if (!filter_var($maximumStudentsCount, FILTER_VALIDATE_INT) || $maximumStudentsCount > 1000000 || $maximumStudentsCount < 1) {
+                        $errors[] = "Поле максимальное количество студентов не может быть больше 1 000 000.";
+                    }
+                    if ($semester != "Autumn" and $semester != "Spring") {
+                        $errors[] = "Поле семестр может принимать значения Autumn и Spring.";
+                    }
+                    if (strlen($requirements)>1023) {
+                        $errors[] = "Поле требования не может быть длинее 1023 символов.";
+                    }
+                    if (strlen($annotations)>1023) {
+                        $errors[] = "Поле аннотации не может быть длинее 1023 символов.";
+                    }
+                    if (!$errors) {
+                        $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE userGuid = ?");
+                        $stmt->execute([$mainTeacherId]);
+                        if ($stmt->fetchColumn() == 0) {
+                            $errors[] = "Пользователь с таким guid не существует.";
+                        }
+                        $stmt = $pdo->prepare("SELECT COUNT(*) FROM courses WHERE `name` = ? AND groupGuid = ?");
+                        $stmt->execute([$name, $course['groupGuid']]);
+                        if ($stmt->fetchColumn() > 0) {
+                            $errors[] = "Курс с таким именем в группе уже существует.";
+                        }
+                    }
+                    if ($errors) {
+                        http_response_code(400);
+                        echo json_encode(["errors" => $errors]);
+                        exit;
+                    }
+                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM teachers WHERE courseGuid = :courseGuid AND userGuid = :userGuid");
+                    $stmt->execute(['courseGuid' => $courseGuid, 'userGuid' => $mainTeacherId]);
+                    if ($stmt->fetchColumn() > 0) {
+                        $stmt = $pdo->prepare("DELETE FROM teachers WHERE userGuid = ?");
+                        $stmt->execute([$mainTeacherId]);
+                    }
+                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM students WHERE courseGuid = :courseGuid AND userGuid = :userGuid");
+                    $stmt->execute(['courseGuid' => $courseGuid, 'userGuid' => $mainTeacherId]);
+                    if ($stmt->fetchColumn() > 0) {
+                        $stmt = $pdo->prepare("DELETE FROM students WHERE userGuid = ?");
+                        $stmt->execute([$mainTeacherId]);
+                    }
+                    if ($mainTeacherId != $course['mainTeacherId']) {
+                        $stmt = $pdo->prepare("
+                            INSERT INTO teachers (userGuid, courseGuid)
+                            VALUES (?, ?)
+                        ");
+                        $stmt->execute([$mainTeacherId, $courseGuid]);
+                    }
+                    $stmt = $pdo->prepare("
+                        UPDATE courses SET name = ?, startYear = ?, maximumStudentsCount = ?, semester = ?, requirements = ?, annotations = ?, mainTeacherId = ?
+                        WHERE courseGuid = ?
+                    ");
+                    $stmt->execute([$name, $startYear, $maximumStudentsCount, $semester, $requirements, $annotations, $mainTeacherId, $courseGuid]);
+                    echo json_encode(["message" => "Курс успешно обновлен."]);
+                } else {
+                    http_response_code(404);
+                    echo json_encode(["message" => "У Вас нет прав для выполнения действия. Обратитесь к администратору!"]);
+                    exit;
+                }
+            } else {
+                http_response_code(404);
+                echo json_encode(["message" => "Такого эндпоинта не существует или у Вас нет прав!"]);
+                exit;
+            }
+        }
+    } else {
+        http_response_code(404);
+        echo json_encode(["message" => "Такого курса не существует или у Вас нет прав!"]);
+        exit;
+    }
 } else if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
-    // TODO: Удаление преподавателей
+    $urlParts = explode('/', $_SERVER['REQUEST_URI']);
+    $courseGuid = $urlParts[count($urlParts) - 1];
+    $stmt = $pdo->prepare("SELECT * FROM courses WHERE courseGuid = :courseGuid");
+    $stmt->execute(['courseGuid' => $courseGuid]);
+    $course = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($course) {
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (empty($data)) {
+            
+            // TODO: Удаление курсов
+
+
+        } else {
+            echo json_encode(["error" => "В DELETE запросе не должно быть тела запроса"]);
+        }
+    } else {
+        http_response_code(404);
+        echo json_encode(["message" => "Такого курса не существует или у Вас нет прав!"]);
+        exit;
+    }
 } else {
     echo json_encode(["message" => "Метод не поддерживается (нужен GET/POST/PUT/DELETE)"]);
 }

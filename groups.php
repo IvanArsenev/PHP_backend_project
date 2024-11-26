@@ -127,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 if (!filter_var($startYear, FILTER_VALIDATE_INT) || $startYear < $currentYear) {
                     $errors[] = "Поле дата начала курса можеть быть годом, начиная от текущего.";
                 }
-                if (!filter_var($maximumStudentsCount, FILTER_VALIDATE_INT) || $maximumStudentsCount > 1000000) {
+                if (!filter_var($maximumStudentsCount, FILTER_VALIDATE_INT) || $maximumStudentsCount > 1000000 || $maximumStudentsCount < 1) {
                     $errors[] = "Поле максимальное количество студентов не может быть больше 1 000 000.";
                 }
                 if ($semester != "Autumn" and $semester != "Spring") {
@@ -151,10 +151,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                     if ($stmt->fetchColumn() == 0) {
                         $errors[] = "Группы с таким guid не существует.";
                     }
-                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM courses WHERE `name` = ?");
-                    $stmt->execute([$name]);
+                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM courses WHERE `name` = ? AND groupGuid = ?");
+                    $stmt->execute([$name, $groupGuid]);
                     if ($stmt->fetchColumn() > 0) {
-                        $errors[] = "Курс с таким именем уже существует.";
+                        $errors[] = "Курс с таким именем в группе уже существует.";
                     }
                 }
                 $courseGuid = generateGuid();
