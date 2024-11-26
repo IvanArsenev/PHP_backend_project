@@ -626,23 +626,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
 } else if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     $urlParts = explode('/', $_SERVER['REQUEST_URI']);
-    $courseGuid = $urlParts[count($urlParts) - 1];
-    $stmt = $pdo->prepare("SELECT * FROM courses WHERE courseGuid = :courseGuid");
-    $stmt->execute(['courseGuid' => $courseGuid]);
-    $course = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($course) {
-        $data = json_decode(file_get_contents('php://input'), true);
-        if (empty($data)) {
-            
-            // TODO: Удаление курсов
-
-
+    if (count($urlParts) == 3) {
+        $courseGuid = $urlParts[count($urlParts) - 1];
+        $stmt = $pdo->prepare("SELECT * FROM courses WHERE courseGuid = :courseGuid");
+        $stmt->execute(['courseGuid' => $courseGuid]);
+        $course = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($course and $user['admin'] == true) {
+            $data = json_decode(file_get_contents('php://input'), true);
+            if (empty($data)) {
+                $stmt = $pdo->prepare("DELETE FROM teachers WHERE courseGuid = ?");
+                $stmt->execute([$courseGuid]);
+                $stmt = $pdo->prepare("DELETE FROM students WHERE courseGuid = ?");
+                $stmt->execute([$courseGuid]);
+                $stmt = $pdo->prepare("DELETE FROM notifications WHERE courseGuid = ?");
+                $stmt->execute([$courseGuid]);
+                $stmt = $pdo->prepare("DELETE FROM courses WHERE courseGuid = ?");
+                $stmt->execute([$courseGuid]);
+                echo json_encode(["message" => "Курс, студенты курса, преподаватели курса и уведомления курса удалены!"]);
+            } else {
+                echo json_encode(["error" => "В DELETE запросе не должно быть тела запроса"]);
+            }
         } else {
-            echo json_encode(["error" => "В DELETE запросе не должно быть тела запроса"]);
+            http_response_code(404);
+            echo json_encode(["message" => "Такого курса не существует или у Вас нет прав!"]);
+            exit;
+        }
+    } else if (count($urlParts) == 4) {
+        $courseGuid = $urlParts[count($urlParts) - 2];
+        $stmt = $pdo->prepare("SELECT * FROM courses WHERE courseGuid = :courseGuid");
+        $stmt->execute(['courseGuid' => $courseGuid]);
+        $course = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($course and $user['admin'] == true) {
+            $teacherGuid = $urlParts[count($urlParts) - 1];
+            $stmt = $pdo->prepare("SELECT * FROM teachers WHERE courseGuid = :courseGuid AND userGuid = :teacherGuid");
+            $stmt->execute(['courseGuid' => $courseGuid, 'teacherGuid' => $teacherGuid]);
+            $teacher = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($teacher) {
+                $stmt = $pdo->prepare("DELETE FROM teachers WHERE courseGuid = ? AND userGuid = ?");
+                $stmt->execute([$courseGuid, $teacherGuid]);
+                echo json_encode(["message" => "Преподаватель удален."]);
+            } else {
+                http_response_code(404);
+                echo json_encode(["message" => "Преподаватель не найден. Можно удалить только не главного преподавателя."]);
+                exit;
+            }
+        } else {
+            http_response_code(404);
+            echo json_encode(["message" => "Такого курса не существует или у Вас нет прав!"]);
+            exit;
         }
     } else {
         http_response_code(404);
-        echo json_encode(["message" => "Такого курса не существует или у Вас нет прав!"]);
+        echo json_encode(["message" => "Такого эндпоинта не существует или у Вас нет прав!"]);
         exit;
     }
 } else {

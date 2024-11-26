@@ -1,0 +1,937 @@
+{
+	"info": {
+		"_postman_id": "74f447f0-1fbf-4aaa-90c9-6c87faee75cc",
+		"name": "BaseBack",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "33983145"
+	},
+	"item": [
+		{
+			"name": "Account",
+			"item": [
+				{
+					"name": "/registration",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"fullName\": \"USER\",\r\n    \"birthDate\": \"01-01-2001\",\r\n    \"email\": \"admin@admin.admin\",\r\n    \"password\": \"qqqqqQ1$\",\r\n    \"confirmPassword\": \"qqqqqQ1$\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{test_host}}/registration",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"registration"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"admin@admin.admin\",\r\n    \"password\": \"qqqqqQ1$\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{test_host}}/login",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/logout",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{test_host}}/logout",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"logout"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{test_host}}/profile",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"fullName\": \"Arsenev Ivan\",\r\n    \"birthDate\": \"24-03-2004\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{test_host}}/profile",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"profile"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Course",
+			"item": [
+				{
+					"name": "/groups/{id}",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"CourseTest\",\r\n    \"startYear\": 2025,\r\n    \"maximumStudentsCount\": 200,\r\n    \"semester\": \"Autumn\",\r\n    \"requirements\": \"Какие-то требования\",\r\n    \"annotations\": \"Какие-то аннотации\",\r\n    \"mainTeacherId\": \"f17f8686-21a1-4922-a543-ef20b71fc5a1\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{test_host}}/groups/15dc4d9d-e024-402c-bc2f-bd009ccfae10",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"groups",
+								"15dc4d9d-e024-402c-bc2f-bd009ccfae10"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/courses/{id}/details",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{test_host}}/courses/07ef2434-c776-41f3-8600-1a97db5a0047/details",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"courses",
+								"07ef2434-c776-41f3-8600-1a97db5a0047",
+								"details"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/courses/{id}/status",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"status\": \"OpenForAssigning\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{test_host}}/courses/07ef2434-c776-41f3-8600-1a97db5a0047/status",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"courses",
+								"07ef2434-c776-41f3-8600-1a97db5a0047",
+								"status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/courses/{id}/notifications",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"text\": \"OpenForAssigning\",\r\n    \"isImportant\": true\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{test_host}}/courses/07ef2434-c776-41f3-8600-1a97db5a0047/notifications",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"courses",
+								"07ef2434-c776-41f3-8600-1a97db5a0047",
+								"notifications"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/courses/{id}/teachers",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"userId\": \"3ac6a9bd-b4f2-4842-8223-2b5a06bc782c\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{test_host}}/courses/07ef2434-c776-41f3-8600-1a97db5a0047/teachers",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"courses",
+								"07ef2434-c776-41f3-8600-1a97db5a0047",
+								"teachers"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/courses/{id}/sign-up",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{test_host}}/courses/07ef2434-c776-41f3-8600-1a97db5a0047/sign-up",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"courses",
+								"07ef2434-c776-41f3-8600-1a97db5a0047",
+								"sign-up"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/courses/{id}/student-status/{id}",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"status\": \"Accepted\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{test_host}}/courses/07ef2434-c776-41f3-8600-1a97db5a0047/student-status/3ac6a9bd-b4f2-4842-8223-2b5a06bc782c",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"courses",
+								"07ef2434-c776-41f3-8600-1a97db5a0047",
+								"student-status",
+								"3ac6a9bd-b4f2-4842-8223-2b5a06bc782c"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/courses/{id}/marks/{id}",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"markType\": \"Final\",\r\n    \"mark\": \"5.3\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{test_host}}/courses/07ef2434-c776-41f3-8600-1a97db5a0047/marks/3ac6a9bd-b4f2-4842-8223-2b5a06bc782c",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"courses",
+								"07ef2434-c776-41f3-8600-1a97db5a0047",
+								"marks",
+								"3ac6a9bd-b4f2-4842-8223-2b5a06bc782c"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/courses/my",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJldGJ4LnJ1IiwiaWF0IjoxNzMyNjE2OTQ3LCJleHAiOjE3MzI3MzA1NDcsInVzZXJHdWlkIjoiM2FjNmE5YmQtYjRmMi00ODQyLTgyMjMtMmI1YTA2YmM3ODJjIn0.W2-TeTbdY27kKTYfuBc_22l0wZN8y2nKAbPgXgPl0cQ",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{test_host}}/courses/my",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"courses",
+								"my"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/courses/teaching",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJldGJ4LnJ1IiwiaWF0IjoxNzMyNjE2NDUzLCJleHAiOjE3MzI3MzAwNTMsInVzZXJHdWlkIjoiZjE3Zjg2ODYtMjFhMS00OTIyLWE1NDMtZWYyMGI3MWZjNWExIn0.YnRmq7U1ohD14Iw3yhQuU0Z6iHC1Ze77RQAxeBaDS0o",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{test_host}}/courses/teaching",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"courses",
+								"teaching"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/courses/{id}/requirements-and-annotations",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJldGJ4LnJ1IiwiaWF0IjoxNzMyNjE2NDUzLCJleHAiOjE3MzI3MzAwNTMsInVzZXJHdWlkIjoiZjE3Zjg2ODYtMjFhMS00OTIyLWE1NDMtZWYyMGI3MWZjNWExIn0.YnRmq7U1ohD14Iw3yhQuU0Z6iHC1Ze77RQAxeBaDS0o",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"requirements\": \"sadasd\",\r\n    \"annotations\": \"dsaasd\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{test_host}}/courses/07ef2434-c776-41f3-8600-1a97db5a0047/requirements-and-annotations",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"courses",
+								"07ef2434-c776-41f3-8600-1a97db5a0047",
+								"requirements-and-annotations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/courses/{id}",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"Имя курса 1\",\r\n    \"startYear\": 2050,\r\n    \"maximumStudentsCount\": 200,\r\n    \"semester\": \"Autumn\",\r\n    \"requirements\": \"Требования\",\r\n    \"annotations\": \"Аннотации\",\r\n    \"mainTeacherId\": \"3ac6a9bd-b4f2-4842-8223-2b5a06bc782c\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{test_host}}/courses/07ef2434-c776-41f3-8600-1a97db5a0047",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"courses",
+								"07ef2434-c776-41f3-8600-1a97db5a0047"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/courses/{id}/{id}",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{test_host}}/courses/07ef2434-c776-41f3-8600-1a97db5a0047/07ef2434-c776-41f3-8600-1a97db5a0047",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"courses",
+								"07ef2434-c776-41f3-8600-1a97db5a0047",
+								"07ef2434-c776-41f3-8600-1a97db5a0047"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Group",
+			"item": [
+				{
+					"name": "/groups",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{test_host}}/groups",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"groups"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/groups",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"groupName\": \"GroupTest 123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{test_host}}/groups",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"groups"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/groups/{id}",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"groupName\": \"GroupTest 21321\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{test_host}}/groups/15dc4d9d-e024-402c-bc2f-bd009ccfae10",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"groups",
+								"15dc4d9d-e024-402c-bc2f-bd009ccfae10"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/groups/{id}",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{test_host}}/groups/15dc4d9d-e024-402c-bc2f-bd009ccfae10",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"groups",
+								"15dc4d9d-e024-402c-bc2f-bd009ccfae10"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/groups/{id}",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{test_host}}/groups/15dc4d9d-e024-402c-bc2f-bd009ccfae10",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"groups",
+								"15dc4d9d-e024-402c-bc2f-bd009ccfae10"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Report",
+			"item": [
+				{
+					"name": "/report",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{test_host}}/report",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"report"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "/users",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{test_host}}/users",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/roles",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{test_host}}/roles",
+							"host": [
+								"{{test_host}}"
+							],
+							"path": [
+								"roles"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "create_db",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{test_host}}/start",
+					"host": [
+						"{{test_host}}"
+					],
+					"path": [
+						"start"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "test_host",
+			"value": "http://localhost:80",
+			"type": "string"
+		},
+		{
+			"key": "host",
+			"value": "http://etbx.ru:8080",
+			"type": "string"
+		},
+		{
+			"key": "admin_token",
+			"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJldGJ4LnJ1IiwiaWF0IjoxNzMyNjI2MzM1LCJleHAiOjE3MzI3Mzk5MzUsInVzZXJHdWlkIjoiMzUxZDBmYzctMWY4NS00YWI3LThhYzctYmRhZWY0ODhjNmE2In0.AjGUrahBKXFMUB19NAgJ8S5nE1dF5mJsT0PK9DJRQec",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJldGJ4LnJ1IiwiaWF0IjoxNzMyNjI2MzcxLCJleHAiOjE3MzI3Mzk5NzEsInVzZXJHdWlkIjoiZTIxZTcxYWQtOWU2OS00ZjA5LTgyZTAtNTM2ZTViY2M3ZmQ0In0.NUFB2ukbbC9y8W6bg-zZa4bFvU94HnvGdIFCvJXczkc",
+			"type": "string"
+		},
+		{
+			"key": "PASSWORD",
+			"value": "\"qqqqqQ1$\"",
+			"type": "string"
+		},
+		{
+			"key": "ADMIN_LOGIN",
+			"value": "\"admin@admin.admin\"",
+			"type": "string"
+		},
+		{
+			"key": "USER_LOGIN",
+			"value": "\"user@user.user\"",
+			"type": "string"
+		}
+	]
+}

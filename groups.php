@@ -139,7 +139,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 if (strlen($annotations)>1023) {
                     $errors[] = "Поле аннотации не может быть длинее 1023 символов.";
                 }
-
                 if (!$errors) {
                     $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE userGuid = ?");
                     $stmt->execute([$mainTeacherId]);
@@ -168,10 +167,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
                 $stmt->execute([$courseGuid, $name, $startYear, $maximumStudentsCount, $maximumStudentsCount, "Created", $semester, $requirements, $annotations, $mainTeacherId, $groupGuid]);
-                
-                // TODO: Возвращать все курсы группы
-                
-                echo json_encode(["message" => "Курс успешно создан!"]);
+
+                $stmt = $pdo->prepare("SELECT courseGuid AS id, name, startYear, maximumStudentsCount, remainingSlotsCount, `status`, semester FROM courses WHERE groupGuid = ?");
+                $stmt->execute([$groupGuid]);
+                $groups = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                echo json_encode($groups, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
             } else {
                 if (isset($data['groupName'])) {
                     $stmt = $pdo->prepare("SELECT COUNT(*) FROM `groups` WHERE `name` = ?");
@@ -252,9 +252,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $stmt = $pdo->prepare("SELECT COUNT(*) FROM `groups` WHERE groupGuid = ?");
             $stmt->execute([$groupGuid]);
             if ($stmt->fetchColumn() > 0) {
-
-                // TODO: Удаление всех студенов в курсах, удаление всех курсов
-                
+                $stmt = $pdo->prepare("SELECT * FROM courses WHERE groupGuid = :groupGuid");
+                $stmt->execute(['groupGuid' => $groupGuid]);
+                $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($courses as $course) {
+                    $courseGuid = $course['courseGuid'];
+                    $stmt = $pdo->prepare("DELETE FROM teachers WHERE courseGuid = ?");
+                    $stmt->execute([$courseGuid]);
+                    $stmt = $pdo->prepare("DELETE FROM students WHERE courseGuid = ?");
+                    $stmt->execute([$courseGuid]);
+                    $stmt = $pdo->prepare("DELETE FROM notifications WHERE courseGuid = ?");
+                    $stmt->execute([$courseGuid]);
+                }
+                $stmt = $pdo->prepare("DELETE FROM courses WHERE groupGuid = ?");
+                $stmt->execute([$groupGuid]);
                 $stmt = $pdo->prepare("DELETE FROM `groups` WHERE groupGuid = ?");
                 $stmt->execute([$groupGuid]);
                 if ($stmt->rowCount() > 0) {
