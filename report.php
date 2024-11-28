@@ -61,11 +61,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $data = json_decode(file_get_contents('php://input'), true);
     if (empty($data)) {
         if ($user['admin'] == true) {
-
-
-
-
-            
+            $stmt = $pdo->prepare("SELECT DISTINCT mainTeacherId FROM courses");
+            $stmt->execute();
+            $courseGuidsMainTeacher = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            $response = [];
+            foreach ($courseGuidsMainTeacher as $mainTeacherGuid) {
+                $stmt = $pdo->prepare("SELECT DISTINCT `name` FROM users WHERE userGuid = :userGuid");
+                $stmt->execute(['userGuid' => $mainTeacherGuid]);
+                $teacherName = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                $report = [];
+                $stmt = $pdo->prepare("SELECT courseGuid, `name` FROM courses WHERE mainTeacherId = :userGuid");
+                $stmt->execute(['userGuid' => $mainTeacherGuid]);
+                $coursesData = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($coursesData as $course) {
+                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM students WHERE courseGuid = :courseGuid AND `status` = 'Accepted'");
+                    $stmt->execute(['courseGuid' => $course['courseGuid']]);
+                    $studentsCount = $stmt->fetchColumn();
+                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM students WHERE courseGuid = :courseGuid AND finalResult = 'Passed' AND `status` = 'Accepted'");
+                    $stmt->execute(['courseGuid' => $course['courseGuid']]);
+                    $passed = $stmt->fetchColumn();
+                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM students WHERE courseGuid = :courseGuid AND finalResult = 'Failed' AND `status` = 'Accepted'");
+                    $stmt->execute(['courseGuid' => $course['courseGuid']]);
+                    $failed = $stmt->fetchColumn();
+                    if ($studentsCount == 0) {
+                        $resultPassed = 0;
+                        $resultFailed = 0;
+                    } else {
+                        $resultPassed = $passed/$studentsCount;
+                        $resultFailed = $failed/$studentsCount;
+                    }
+                    $report[] = [
+                        'name' => $course['name'],
+                        'id' => $course['courseGuid'],
+                        'averagePassed' => $resultPassed,
+                        'averageFailed' => $resultFailed
+                    ];
+                }
+                $response[] = [
+                    'fullName' => $teacherName[0],
+                    'id' => $mainTeacherGuid,
+                    'campusGroupReports' => $report,
+                ];
+            }
+            echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         } else {
             http_response_code(403);
             echo json_encode(["message" => "У Вас нет прав на генерацию отчета. Обратитесь к администратору"]);

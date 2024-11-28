@@ -270,7 +270,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                                     INSERT INTO notifications (courseGuid, text, isImportant)
                                     VALUES (?, ?, ?)
                                 ");
-                                $stmt->execute([$courseGuid, $data['text'], $data['isImportant']]);
+                                if ($data['isImportant']) {
+                                    $stmt->execute([$courseGuid, $data['text'], 1]);
+                                } else {
+                                    $stmt->execute([$courseGuid, $data['text'], 0]);
+                                }
                                 $stmt = $pdo->prepare("SELECT COUNT(*) as enrolledCount FROM students WHERE courseGuid = :courseGuid AND status = 'Accepted'");
                                 $stmt->execute(['courseGuid' => $courseGuid]);
                                 $enrolledCount = $stmt->fetch(PDO::FETCH_ASSOC)['enrolledCount'];
@@ -327,8 +331,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 } else if ($urlParts[count($urlParts) - 1] == "teachers" and $user['admin'] == true) {
                     if (isset($data['userId'])) {
                         $stmt = $pdo->prepare("SELECT COUNT(*) FROM teachers WHERE courseGuid = :courseGuid AND userGuid = :userGuid");
-                        $stmt->execute(['courseGuid' => $courseGuid, 'userGuid' => $user['userGuid']]);
-                        if ($stmt->fetchColumn() > 0 or $course['mainTeacherId'] == $user['userGuid']) {
+                        $stmt->execute(['courseGuid' => $courseGuid, 'userGuid' => $data['userId']]);
+                        if ($stmt->fetchColumn() > 0 or $course['mainTeacherId'] == $data['userId']) {
                             http_response_code(400);
                             echo json_encode(["error" => "Пользователь уже является преподавателем данного курса"]);
                             exit;
@@ -379,25 +383,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $data = json_decode(file_get_contents('php://input'), true);
             if ($urlParts[count($urlParts) - 2] == "student-status") {
                 if (isset($data['status'])) {
-                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM teachers WHERE courseGuid = :courseGuid AND userGuid = :userGuid");
-                    $stmt->execute(['courseGuid' => $courseGuid, 'userGuid' => $user['userGuid']]);
-                    if ($stmt->fetchColumn() > 0 or $course['mainTeacherId'] == $user['userGuid'] or $user['admin'] == true) {
-                        $stmt = $pdo->prepare("SELECT COUNT(*) FROM students WHERE courseGuid = :courseGuid AND userGuid = :userGuid");
-                        $stmt->execute(['courseGuid' => $courseGuid, 'userGuid' => $studentGuid]);
-                        $sql = "UPDATE `students` SET `status` = ? WHERE `courseGuid` = ? AND `userGuid` = ?";
-                        $stmt = $pdo->prepare($sql);
-                        $stmt->execute([$data['status'], $courseGuid, $studentGuid]);
-                        if ($stmt->rowCount() > 0) {
-                            echo json_encode(["message" => "Статус успешно обновлен."]);
+                    if ($data['status'] === "Accepted" or $data['status'] === "Declined") {
+                        $stmt = $pdo->prepare("SELECT COUNT(*) FROM teachers WHERE courseGuid = :courseGuid AND userGuid = :userGuid");
+                        $stmt->execute(['courseGuid' => $courseGuid, 'userGuid' => $user['userGuid']]);
+                        if ($stmt->fetchColumn() > 0 or $course['mainTeacherId'] == $user['userGuid'] or $user['admin'] == true) {
+                            $stmt = $pdo->prepare("SELECT COUNT(*) FROM students WHERE courseGuid = :courseGuid AND userGuid = :userGuid");
+                            $stmt->execute(['courseGuid' => $courseGuid, 'userGuid' => $studentGuid]);
+                            $sql = "UPDATE `students` SET `status` = ? WHERE `courseGuid` = ? AND `userGuid` = ?";
+                            $stmt = $pdo->prepare($sql);
+                            $stmt->execute([$data['status'], $courseGuid, $studentGuid]);
+                            if ($stmt->rowCount() > 0) {
+                                echo json_encode(["message" => "Статус успешно обновлен."]);
+                            } else {
+                                http_response_code(400);
+                                echo json_encode(["error" => "Не удалось обновить данные. Курс не найден или данные не изменены."]);
+                            }
                         } else {
                             http_response_code(400);
-                            echo json_encode(["error" => "Не удалось обновить данные. Курс не найден или данные не изменены."]);
+                            echo json_encode(["error" => "У Вас нет прав на выполнение данного запроса!"]);
+                            exit; 
                         }
                     } else {
                         http_response_code(400);
-                        echo json_encode(["error" => "У Вас нет прав на выполнение данного запроса!"]);
-                        exit; 
+                        echo json_encode(["error" => "Status может быть только 'Accepted' и 'Declined'"]);
+                        exit;
                     }
+                    
                 } else {
                     http_response_code(400);
                     echo json_encode(["error" => "В теле запроса должен быть параметр status ('Accepted', 'Declined')"]);
@@ -405,40 +416,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 }
             } else if ($urlParts[count($urlParts) - 2] == "marks") {
                 if (isset($data['markType']) and isset($data['mark'])) {
-                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM teachers WHERE courseGuid = :courseGuid AND userGuid = :userGuid");
-                    $stmt->execute(['courseGuid' => $courseGuid, 'userGuid' => $user['userGuid']]);
-                    if ($stmt->fetchColumn() > 0 or $course['mainTeacherId'] == $user['userGuid'] or $user['admin'] == true) {
-                        if ($data['markType'] == 'Midterm' or $data['markType'] == 'Final') {
-                            if ($data['mark'] == 'NotDefined' or $data['mark'] == 'Passed' or $data['mark'] == 'Failed') {
-                                if ($data['markType'] == 'Midterm') {
-                                    $sql = "UPDATE `students` SET midtermResult = ? WHERE `courseGuid` = ? AND `userGuid` = ?";
-                                    $stmt = $pdo->prepare($sql);
-                                    $stmt->execute([$data['mark'], $courseGuid, $studentGuid]);
-                                } else {
-                                    $sql = "UPDATE `students` SET finalResult = ? WHERE `courseGuid` = ? AND `userGuid` = ?";
-                                    $stmt = $pdo->prepare($sql);
-                                    $stmt->execute([$data['mark'], $courseGuid, $studentGuid]);
-                                }
-                                if ($stmt->rowCount() > 0) {
-                                    echo json_encode(["message" => "Оценка успешно обновлена."]);
+                    if ($student['status'] === "Accepted") {
+                        $stmt = $pdo->prepare("SELECT COUNT(*) FROM teachers WHERE courseGuid = :courseGuid AND userGuid = :userGuid");
+                        $stmt->execute(['courseGuid' => $courseGuid, 'userGuid' => $user['userGuid']]);
+                        if ($stmt->fetchColumn() > 0 or $course['mainTeacherId'] == $user['userGuid'] or $user['admin'] == true) {
+                            if ($data['markType'] == 'Midterm' or $data['markType'] == 'Final') {
+                                if ($data['mark'] == 'NotDefined' or $data['mark'] == 'Passed' or $data['mark'] == 'Failed') {
+                                    if ($data['markType'] == 'Midterm') {
+                                        $sql = "UPDATE `students` SET midtermResult = ? WHERE `courseGuid` = ? AND `userGuid` = ?";
+                                        $stmt = $pdo->prepare($sql);
+                                        $stmt->execute([$data['mark'], $courseGuid, $studentGuid]);
+                                    } else {
+                                        $sql = "UPDATE `students` SET finalResult = ? WHERE `courseGuid` = ? AND `userGuid` = ?";
+                                        $stmt = $pdo->prepare($sql);
+                                        $stmt->execute([$data['mark'], $courseGuid, $studentGuid]);
+                                    }
+                                    if ($stmt->rowCount() > 0) {
+                                        echo json_encode(["message" => "Оценка успешно обновлена."]);
+                                    } else {
+                                        http_response_code(400);
+                                        echo json_encode(["error" => "Не удалось обновить данные. Курс не найден или данные не изменены."]);
+                                    }
                                 } else {
                                     http_response_code(400);
-                                    echo json_encode(["error" => "Не удалось обновить данные. Курс не найден или данные не изменены."]);
+                                    echo json_encode(["error" => "mark может принимать значения 'NotDefined', 'Passed', 'Failed'"]);
+                                    exit;
                                 }
                             } else {
                                 http_response_code(400);
-                                echo json_encode(["error" => "mark может принимать значения 'NotDefined', 'Passed', 'Failed'"]);
+                                echo json_encode(["error" => "markType может быть только Midterm и Final"]);
                                 exit;
                             }
                         } else {
                             http_response_code(400);
-                            echo json_encode(["error" => "markType может быть только Midterm и Final"]);
-                            exit;
+                            echo json_encode(["error" => "У Вас нет прав на выполнение данного запроса!"]);
+                            exit; 
                         }
                     } else {
                         http_response_code(400);
-                        echo json_encode(["error" => "У Вас нет прав на выполнение данного запроса!"]);
-                        exit; 
+                        echo json_encode(["error" => "Студент должен быть зачислен на курс!"]);
+                        exit;
                     }
                 } else {
                     http_response_code(400);

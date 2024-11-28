@@ -66,37 +66,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         } else {
             $response[] = ["Admin" => "false"];
         }
-        $stmt = $pdo->prepare("SELECT courseGuid FROM students WHERE userGuid = :userGuid");
+        $stmt = $pdo->prepare("SELECT courseGuid FROM students WHERE userGuid = :userGuid AND `status` = 'Accepted'");
         $stmt->execute(['userGuid' => $user['userGuid']]);
         $courseGuidsStudent = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
         $stmt = $pdo->prepare("SELECT courseGuid FROM teachers WHERE userGuid = :userGuid");
         $stmt->execute(['userGuid' => $user['userGuid']]);
         $courseGuidsTeacher = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-        $allCourseGuids = array_unique(array_merge($courseGuidsStudent, $courseGuidsTeacher));
+        $stmt = $pdo->prepare("SELECT courseGuid FROM courses WHERE mainTeacherId = :userGuid");
+        $stmt->execute(['userGuid' => $user['userGuid']]);
+        $courseGuidsMainTeacher = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        $allCourseGuids = array_unique(array_merge($courseGuidsStudent, $courseGuidsTeacher, $courseGuidsMainTeacher));
         if (count($allCourseGuids) > 0) {
-            $inQuery = implode(',', array_fill(0, count($courseGuidsStudent), '?'));
-            $stmt = $pdo->prepare("SELECT * FROM courses WHERE courseGuid IN ($inQuery)");
-            $stmt->execute($courseGuidsStudent);
-            $coursesStudent = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $inQuery = implode(',', array_fill(0, count($courseGuidsTeacher), '?'));
-            $stmt = $pdo->prepare("SELECT * FROM courses WHERE courseGuid IN ($inQuery)");
-            $stmt->execute($courseGuidsTeacher);
-            $coursesTeacher = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            foreach ($coursesStudent as $course) {
-                $response[] = [
-                    'id' => $course['courseGuid'],
-                    'teacher' => false,
-                    'student' => true
-                ];
+            if (count($courseGuidsMainTeacher) > 0) {
+                $inQuery = implode(',', array_fill(0, count($courseGuidsMainTeacher), '?'));
+                $stmt = $pdo->prepare("SELECT * FROM courses WHERE courseGuid IN ($inQuery)");
+                $stmt->execute($courseGuidsMainTeacher);
+                $coursesMainTeacher = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($coursesMainTeacher as $course) {
+                    $response[] = [
+                        'Course id' => $course['courseGuid'],
+                        'Main teacher' => true,
+                        'Base teacher' => false,
+                        'Student' => false
+                    ];
+                }
             }
-            foreach ($coursesTeacher as $course) {
-                $response[] = [
-                    'id' => $course['courseGuid'],
-                    'teacher' => true,
-                    'student' => false
-                ];
+            if (count($courseGuidsStudent) > 0) {
+                $inQuery = implode(',', array_fill(0, count($courseGuidsStudent), '?'));
+                $stmt = $pdo->prepare("SELECT * FROM courses WHERE courseGuid IN ($inQuery)");
+                $stmt->execute($courseGuidsStudent);
+                $coursesStudent = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($coursesStudent as $course) {
+                    $response[] = [
+                        'Course id' => $course['courseGuid'],
+                        'Main teacher' => false,
+                        'Base teacher' => false,
+                        'Student' => true
+                    ];
+                }
+            }
+            if (count($courseGuidsTeacher) > 0) {
+                $inQuery = implode(',', array_fill(0, count($courseGuidsTeacher), '?'));
+                $stmt = $pdo->prepare("SELECT * FROM courses WHERE courseGuid IN ($inQuery)");
+                $stmt->execute($courseGuidsTeacher);
+                $coursesTeacher = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($coursesTeacher as $course) {
+                    $response[] = [
+                        'Course id' => $course['courseGuid'],
+                        'Main teacher' => false,
+                        'Base teacher' => true,
+                        'Student' => false
+                    ];
+                }
             }
             echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         } else {
