@@ -825,5 +825,14 @@
                     "averageFailed": N
                 }, ...
             ]
-        }, ...
+        },.
     ]
+
+---
+ 
+
+## Настоящая история коммитов
+ 
+<p align="center">
+<img src="https://github.com/IvanArsenev/PHP_backend_project/blob/main/img/real_commit_story.png?raw=true"  />
+<p>
