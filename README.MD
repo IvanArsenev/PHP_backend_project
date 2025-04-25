@@ -1,838 +1,608 @@
-# API документация
- 
+# 📚 API Documentation
+## 📂 Database Structure
+<p align="center"> <img src="https://github.com/IvanArsenev/PHP_backend_project/blob/main/img/base_backend.png?raw=true" /> </p>
 
-## Структура базы данных
- 
-<p align="center">
-<img src="https://github.com/IvanArsenev/PHP_backend_project/blob/main/img/base_backend.png?raw=true"  />
-<p>
- 
+## 👤 Account Endpoints
+### 🔐 Registration
 
-## Account запросы
- 
+```
+POST http://host/registration
+```
 
-### Регистрация
- 
+#### Example Request Body
+```
+{
+  "fullName": "User Name",
+  "birthDate": "DD-MM-YYYY",
+  "email": "email@domain.com",
+  "password": "STRONG_PASSWORD",
+  "confirmPassword": "STRONG_PASSWORD"
+}
+```
 
-    POST http://host/registration
+#### Validations
+- All fields must be present
+- Email must be unique
+- Birthdate must not be in the future
+- Email format must be valid
+- Passwords must match
+- Password must be strong (min. 8 characters, 1 uppercase, 1 digit, 1 special character)
 
-Пример тела запроса:
- 
+#### Success Response
+```
+{
+  "token": "USER_TOKEN" // valid for 1 hour
+}
+```
+### 🔓 Login
+```
+POST http://host/login
+```
+#### Example Request Body
+```
+{
+  "email": "email@domain.com",
+  "password": "STRONG_PASSWORD"
+}
+```
+#### Validations
+- All fields must be present
+- Email must exist
+- Password must be correct
 
+#### Success Response
+
+```
+{
+  "token": "USER_TOKEN" // valid for 1 hour
+}
+```
+### 🚪 Logout
+```
+POST http://host/logout (Requires Bearer Token)
+```
+
+#### Validations
+- Valid token required
+
+#### Success Response
+```
+{
+  "message": "Вы успешно вышли из системы."
+}
+```
+### 👁️ View Profile
+```
+GET http://host/profile (Requires Bearer Token)
+```
+
+#### Success Response
+```
+{
+  "name": "User Name",
+  "email": "email@domain.com",
+  "birthDate": "DD-MM-YYYY"
+}
+```
+### ✏️ Edit Profile
+```
+PUT http://host/profile (Requires Bearer Token)
+```
+#### Example Request Body
+```
+{
+  "fullName": "NEW NAME",
+  "birthDate": "DD-MM-YYYY"
+}
+```
+
+#### Validations
+- Valid token
+- Fields must be present
+- Birthdate must not be in the future
+
+#### Success Response
+```
+{
+  "message": "Данные пользователя успешно обновлены."
+}
+```
+
+## 🧑‍🤝‍🧑 Group Management
+### 📄 View Groups
+```
+GET http://host/groups (Requires Bearer Token)
+```
+#### Success Response
+```
+[
+  {
+    "id": "GROUP_GUID",
+    "name": "Group Name"
+  }
+]
+```
+### ➕ Create Group
+```
+POST http://host/groups (Requires Bearer Token)
+```
+#### Example Request Body
+```
+{
+  "groupName": "GROUP NAME"
+}
+```
+#### Validations
+- Admin only
+- Unique group name
+- Success Response
+
+#### Success Response
+```
+{
+  "id": "GROUP_GUID",
+  "name": "Group Name"
+}
+```
+### ✏️ Edit Group
+```
+PUT http://host/groups/{id} (Requires Bearer Token)
+id = group GUID
+```
+#### Example Request Body
+```
+{
+  "groupName": "NEW GROUP NAME"
+}
+```
+#### Validations
+- Admin only
+- Unique group name
+- Success Response
+
+```
+{
+  "message": "Данные группы успешно обновлены."
+}
+```
+### ❌ Delete Group
+```
+DELETE http://host/groups/{id} (Requires Bearer Token)
+id = group GUID
+```
+#### Validations
+- Admin only
+
+#### Success Response
+```
+{
+  "message": "Группа успешно удалена"
+}
+```
+### 📚 View Group Courses
+```
+GET http://host/groups/{id} (Requires Bearer Token)
+id = group GUID
+```
+
+#### Success Response
+```
+[
+  {
+    "id": "COURSE_GUID",
+    "name": "Course Name",
+    "startYear": 2024,
+    "maximumStudentsCount": 30,
+    "remainingSlotsCount": 10,
+    "status": "Course Status",
+    "semester": "Semester"
+  }
+]
+```
+## 📘 Course Management
+### 📄 Course Details
+```
+GET http://host/courses/{id}/details (Requires Bearer Token)
+id = course GUID
+```
+#### Success Response
+```
+{
+  "id": "COURSE_GUID",
+  "name": "Course Name",
+  "startYear": 2024,
+  "maximumStudentsCount": 30,
+  "studentsEnrolledCount": 20,
+  "studentsInQueueCount": 5,
+  "requirements": "Requirements",
+  "annotations": "Annotations",
+  "status": "Status",
+  "semester": "Semester",
+  "students": [
     {
-        "fullName": "Имя пользователя",
-        "birthDate": "ДД-ММ-ГГГГ",
-        "email": "email@domain.domain",
-        "password": "STRONG_PASSWORD",
-        "confirmPassword": "STRONG_PASSWORD"
+      "name": "Student Name",
+      "email": "email@domain.com"
     }
-
-Валидация:
- 
-
-    1. Проверка наличия всех полей
-    2. Проверка зарегистрированного пользователя с таким email
-    3. Проверка даты рождения (дата рождения не может быть позже сегодняшней даты)
-    4. Проверка формата email
-    5. Проверка совпадения паролей
-    6. Проверка сложности пароля (минимум 8 символов, одна заглавная буква, одна цифра и специальный символ)
-
-В случае успеха возвращает:
- 
-
+  ],
+  "teachers": [
     {
-        "token": "ТОКЕН ПОЛЬЗОВАТЕЛЯ" (токен живет 1 час)
+      "name": "Teacher Name",
+      "email": "email@domain.com",
+      "isMain": true
     }
-
----
- 
-
-### Вход
- 
-
-    POST http://host/login
-
-Пример тела запроса:
- 
-
+  ],
+  "notifications": [
     {
-        "email": "email@domain.domain",
-        "password": "STRONG_PASSWORD"
+      "text": "Notification text",
+      "isImportant": true
     }
+  ]
+}
+```
+### 🔄 Change Course Status
+```
+POST http://host/courses/{id}/status (Requires Bearer Token)
+id = course GUID
+```
+#### Example Request Body
+```
+{
+  "status": "OpenForAssigning"
+}
+```
+#### Validations
+- Status must be one of: OpenForAssigning, Started, Finished
+- Only teachers or admins can change status
 
-Валидация:
- 
+#### Success Response
+```
+{
+  "message": "Статус успешно обновлен."
+}
+```
+### 🔔 Add Course Notification
+```
+POST http://host/courses/{id}/notifications (Requires Bearer Token)
+id = course GUID
+```
+#### Example Request Body
+```
+{
+  "text": "Notification text",
+  "isImportant": true
+}
+```
+#### Validations
+- Only teachers or admins can post notifications
 
-    1. Проверка наличия всех полей
-    2. Проверка зарегистрированного пользователя с таким email
-    3. Проверка пароля
+#### Success Response: Same as Course Details
+### 👨‍🏫 Add Course Teacher
+```
+POST http://host/courses/{id}/teachers (Requires Bearer Token)
+id = course GUID
+```
+#### Example Request Body
+```
+{
+  "userId": "USER_GUID"
+}
+```
 
-В случае успеха возвращает:
- 
+#### Validations
+- Admin only
+- User must exist
+- User must not already be a teacher
 
+#### Success Response
+```
+{
+  "teachers": [
     {
-        "token": "ТОКЕН ПОЛЬЗОВАТЕЛЯ" (токен живет 1 час)
+      "name": "Teacher Name",
+      "email": "email@domain.com",
+      "isMain": true
     }
+  ]
+}
+```
+### 📝 Sign Up for Course
+```
+POST http://host/courses/{id}/sign-up (Requires Bearer Token)
+id = course GUID
+```
+#### Validations
+- Course must exist
+- Course must be open for registration
+- Must not already be enrolled or waiting
 
----
- 
+#### Success Response
+```
+{
+  "message": "Заявка на курс отправлена"
+}
+```
 
-### Выход
- 
+### 🔁 Update Student Status
+```
+POST http://host/courses/{courseId}/student-status/{studentId} (Requires Bearer Token)
+```
 
-    POST http://host/logout (Выполняется с Bearer Token)
+#### Example Request Body
+```
+{
+  "status": "Accepted"
+}
+```
+#### Validations
+- Verification of the validity of the token
+- Checking the fields of the request body
+- Check the status. Maybe only 'Accepted', 'Declined'
+- Check if there is a student in the course with such a GUID.
+- Check if there is a course with this GUID.
+- Rights verification. Only the course teacher or the administrator can change the status.
 
-Валидация:
- 
+#### Success Response
+```
+{
+  "message": "Статус успешно обновлен."
+}
+```
 
-    Проверка корректности токена
+### Give a student a grade
 
-В случае успеха возвращает:
- 
+```
+POST http://host/courses/{courseId}/marks/{studentId} (Requires Bearer Token)
+```
 
+#### Example Request Body
+```
+{
+    "markType": "Midterm",
+    "mark": "Passed"
+}
+```
+#### Validations
+- Verification of the validity of the token
+- Checking the fields of the request body
+- Checking the type of assessment. It can only be 'Midterm', 'Final'
+- Check if there is a student in the course with such a GUID.
+- Check if there is a course with this GUID.
+- Rights verification. Only the course teacher or the administrator can give grades.
+- The score can take the values 'NotDefined', 'Passed', 'Failed'
+- Verification that the student is enrolled in the course
+
+#### Success Response
+```
+{
+  "message": "Оценка успешно обновлена."
+}
+```
+
+### Viewing courses where the user is a student
+
+```
+GET http://host/courses/my (Requires Bearer Token)
+```
+
+
+#### Validations
+- Verification of the validity of the token
+
+#### Success Response
+```
+[
     {
-        "message": "Вы успешно вышли из системы."
-    }
-
-<br>
- 
----
- 
-
-### Просмотр профиля
- 
-
-    GET http://host/profile (Выполняется с Bearer Token)
-
-Валидация:
- 
-
-    Проверка корректности токена
-
-В случае успеха возвращает:
- 
-
-    {
-        "name": "Имя пользователя",
-        "email": "email@domain.domain",
-        "birthDate": "ДД-ММ-ГГГГ",
-    }
-
----
- 
-
-### Изменение профиля
- 
-
-    PUT http://host/profile (Выполняется с Bearer Token)
-
-Пример тела запроса:
- 
-
-    {
-        "fullName": "НОВОЕ ИМЯ",
-        "birthDate": "ДД-ММ-ГГГГ"
-    }
-
-Валидация:
- 
-
-    1. Проверка корректности токена
-    2. Проверка наличия полей в теле запроса
-    3. Проверка даты рождения (дата рождения не может быть позже сегодняшней даты)
-
-В случае успеха возвращает:
- 
-
-    {
-        "message": "Данные пользователя успешно обновлены."
-    }
-
----
- 
-
-## Работа с группами
- 
-
-### Просмотр групп
- 
-
-    GET http://host/groups (Выполняется с Bearer Token)
-
-Валидация:
- 
-
-    Проверка корректности токена
-
-В случае успеха возвращает:
- 
-
-    [
-        {
-            "id": "GUID группы",
-            "name": "Имя группы"
-        },
-        {
-            "id": "GUID группы",
-            "name": "Имя группы"
-        }, ...
-    ]
-
----
- 
-
-### Создание группы
- 
-
-    POST http://host/groups (Выполняется с Bearer Token)
-
-Пример тела запроса:
- 
-
-    {
-        "groupName": "ИМЯ ГРУППЫ"
-    }
-
-Валидация:
- 
-
-    1. Проверка корректности токена
-    2. Проверка прав (создавать группы может только администратор)
-    3. Проверка названия группы (1 название = 1 группа)
-
-В случае успеха возвращает:
- 
-
-    {
-        "id": "GUID группы",
-        "name": "Имя группы"
-    }
-
----
- 
-
-### Изменение группы
- 
-
-    PUT http://host/groups/{id} (Выполняется с Bearer Token)
-    id = GUID группы
-
-Пример тела запроса:
- 
-
-    {
-        "groupName": " НОВОЕ ИМЯ ГРУППЫ"
-    }
-
-Валидация:
- 
-
-    1. Проверка корректности токена
-    2. Проверка прав (редактировать группы может только администратор)
-    3. Проверка названия группы (1 название = 1 группа)
-
-В случае успеха возвращает:
- 
-
-    {
-        "message": "Данные группы успешно обновлены."
-    }
-
----
- 
-
-### Удаление группы
- 
-
-    DELETE http://host/groups/{id} (Выполняется с Bearer Token)
-    id = GUID группы
-
-Валидация:
- 
-
-    1. Проверка корректности токена
-    2. Проверка прав (удалять группы может только администратор)
-
-В случае успеха возвращает:
- 
-
-    {
-        "message": "Группа успешно удалена"
-    }
-
----
- 
-
-### Просмотр курсов группы
- 
-
-    GET http://host/groups/{id} (Выполняется с Bearer Token)
-    id = GUID группы
-
-Валидация:
- 
-
-    Проверка корректности токена
-
-В случае успеха возвращает:
- 
-
-    [
-        {
-            "id": "GUID курса",
-            "name": "Имя курса",
-            "startYear": ГГГГ,
-            "maximumStudentsCount": N,
-            "remainingSlotsCount": N,
-            "status": "Статус курса",
-            "semester": "Семестр"
-        }, ...
-    ]
-
----
- 
-
-## Работа с курсами
- 
-
-### Просмотр деталей курса
- 
-
-    GET http://host/courses/{id}/details (Выполняется с Bearer Token)
-    id = GUID курса
-
-Валидация:
- 
-
-    Проверка корректности токена
-
-В случае успеха возвращает:
- 
-
-    {
-        "id": "GUID курса",
-        "name": "Имя курса",
-        "startYear": ГГГГ,
+        "id": "course GUID",
+        "name": "Course name",
+        "startYear": YYYY,
         "maximumStudentsCount": N,
-        "studentsEnrolledCount": N,
-        "studentsInQueueCount": N,
-        "requirements": "Требования",
-        "annotations": "Аннотации",
-        "status": "Статус",
-        "semester": "Семестр",
-        "students": [
+        "remainingSlotsCount": N,
+        "status": "Status",
+        "semester": "Semester"
+    }, ...
+]
+```
+
+### Viewing courses where the user is a teacher
+
+```
+GET http://host/courses/teaching  (Requires Bearer Token)
+```
+
+
+#### Validations
+- Verification of the validity of the token
+
+#### Success Response
+```
+[
+    {
+        "id": "course GUID",
+        "name": "Course name",
+        "startYear": YYYY,
+        "maximumStudentsCount": N,
+        "remainingSlotsCount": N,
+        "status": "Status",
+        "semester": "Semester"
+    }, ...
+]
+```
+
+### Changing requirements and annotations
+
+```
+PUT http://host/courses/{courseId}/requirements-and-annotations (Requires Bearer Token)
+```
+
+#### Example Request Body
+```
+{
+    "requirements": "some text",
+    "annotations": "some text"
+}
+```
+#### Validations
+- Verification of the validity of the token
+- Checking the requirements field
+- Checking the annotations field
+- Verification of the request body
+- Checking access rights
+
+#### Success Response
+```
+{
+  "message": "Аннотации успешно обновлены."
+}
+```
+
+### Course change
+
+```
+PUT http://host/courses/{courseId} (Requires Bearer Token)
+```
+
+#### Example Request Body
+```
+{
+    "name": "name",
+    "startYear": YYYY,
+    "maximumStudentsCount": N,
+    "semester": "semester",
+    "requirements": "requirements",
+    "annotations": "annotations",
+    "mainTeacherId": "mainTeacherId"
+}
+```
+#### Validations
+- Verification of the validity of the token
+- Checking the name field (1 name = 1 course in the group)
+- Checking the startYear field (the start year is not less than the current one)
+- Checking the semester field ('Autumn', 'Spring')
+- Checking the requirements field
+- Checking the annotations field
+- Checking the mainTeacherId field (the user exists)
+- Checking access rights
+
+P.s. The maximumStudentsCount field is validated only for the condition of a positive number. The maximumStudentsCount may be less than the students in the course
+
+#### Success Response
+```
+{
+  "message": "Курс успешно обновлен."
+}
+```
+
+### Course Deletion
+
+```
+DELETE http://host/courses/{courseId} (Requires Bearer Token)
+```
+
+#### Validations
+- Verification of the validity of the token
+- Checking access rights
+- Checking the existence of the course
+
+#### Success Response
+```
+{
+  "message": "Курс, студенты курса, преподаватели курса и уведомления курса удалены!"
+}
+```
+
+### Deleting a course teacher
+
+```
+DELETE http://host/courses/{courseId}/teacherId (Requires Bearer Token)
+```
+
+#### Validations
+- Verification of the validity of the token
+- Checking access rights
+- Checking the existence of the course
+- Checking the teacher's existence
+
+#### Success Response
+```
+{
+  "message": "Преподаватель удален."
+}
+```
+
+## Reports
+### Print of all users
+
+```
+GET http://host/users (Requires Bearer Token)
+```
+
+#### Validations
+- Verification of the validity of the token
+
+#### Success Response
+```
+[
+    {
+        "id": "user GUID",
+        "name": "user guid",
+        "email": "domain@domain.domain"
+    }, ...
+]
+```
+
+### Output of user roles
+
+```
+GET http://host/roles (Requires Bearer Token)
+```
+
+#### Validations
+- Verification of the validity of the token
+
+#### Success Response
+```
+[
+    {
+        "Admin": "false"
+    },
+    {
+        "Course id": "course GUID",
+        "Main teacher": false,
+        "Base teacher": false,
+        "Student": true
+    }, ...
+]
+```
+
+### Report output
+
+```
+GET http://host/report (Requires Bearer Token)
+```
+
+#### Validations
+- Verification of the validity of the token
+- Checking access rights
+
+#### Success Response
+```
+[
+    {
+        "fullName": "Teacher name",
+        "id": "Teacher GUID",
+        "campusGroupReports": [
             {
-                "name": "Имя студента",
-                "email": "email@domain.domain"
-            }, ...
-        ],
-        "teachers": [
-            {
-                "name": "Имя преподавателя",
-                "email": "email@domain.domain",
-                "isMain": true
-            }, ...
-        ],
-        "notifications": [
-            {
-                "text": "Текст уведомления",
-                "isImportant": true
+                "name": "Course name",
+                "id": "Course GUID",
+                "averagePassed": N,
+                "averageFailed": N
             }, ...
         ]
-    }
-
----
- 
-
-### Изменение статуса курса
- 
-
-    POST http://host/courses/{id}/status (Выполняется с Bearer Token)
-    id = GUID курса
-
-Пример тела запроса:
- 
-
-    {
-        "status": "Статус"
-    }
-
-Валидация:
- 
-
-    1. Проверка корректности токена
-    2. Проверка полей тела запроса
-    3. Статус может быть только: 'OpenForAssigning', 'Started', 'Finished'
-    4. Проверка прав доступа. Менять статус могут только преподаватели данного курса или администраторы
-
-В случае успеха возвращает:
- 
-
-    {
-        "message": "Статус успешно обновлен."
-    }
-
----
- 
-
-### Создание уведомлений курса
- 
-
-    POST http://host/courses/{id}/notifications (Выполняется с Bearer Token)
-    id = GUID курса
-
-Пример тела запроса:
- 
-
-    {
-        "text": "Текст уведомления",
-        "isImportant": true
-    }
-
-Валидация:
- 
-
-    1. Проверка корректности токена
-    2. Проверка полей тела запроса
-    3. isImportant может быть только: true или false
-    4. Проверка прав доступа. Создавать уведомления могут только преподаватели данного курса или администраторы
-
-В случае успеха возвращает:
- 
-
-    {
-        "id": "GUID курса",
-        "name": "Имя курса",
-        "startYear": ГГГГ,
-        "maximumStudentsCount": N,
-        "studentsEnrolledCount": N,
-        "studentsInQueueCount": N,
-        "requirements": "Требования",
-        "annotations": "Аннотации",
-        "status": "Статус",
-        "semester": "Семестр",
-        "students": [
-            {
-                "name": "Имя студента",
-                "email": "email@domain.domain"
-            }, ...
-        ],
-        "teachers": [
-            {
-                "name": "Имя преподавателя",
-                "email": "email@domain.domain",
-                "isMain": true
-            }, ...
-        ],
-        "notifications": [
-            {
-                "text": "Текст уведомления",
-                "isImportant": true
-            }, ...
-        ]
-    }
-
----
- 
-
-### Добавление преподавателей курса
- 
-
-    POST http://host/courses/{id}/teachers (Выполняется с Bearer Token)
-    id = GUID курса
-
-Пример тела запроса:
- 
-
-    {
-      "userId": "GUID пользователя"
-    }
-
-Валидация:
- 
-
-    1. Проверка корректности токена
-    2. Проверка полей тела запроса
-    3. Проверить, существует ли пользователь с таким GUID
-    4. Проверка прав доступа. Добавлять преподавателей могут только администраторы
-    5. Является ли преподаватель уже преподавателем
-
-В случае успеха возвращает:
- 
-
-    "teachers": [
-        {
-            "name": "Имя преподавателя",
-            "email": "email@domain.domain",
-            "isMain": true
-        }, ...
-    ]
-
----
- 
-
-### Регистрация на курс
- 
-
-    POST http://host/courses/{id}/sign-up (Выполняется с Bearer Token)
-    id = GUID курса
-
-Валидация:
- 
-
-    1. Проверка корректности токена
-    2. Является ли пользователь преподавателем
-    3. Проверить, существует ли курс таким GUID
-    4. Подана ли заявка ранее
-    5. Открыт ли курс для записи
-
-В случае успеха возвращает:
- 
-
-    {
-        "message": "Заявка на курс отправлена"
-    }
-
----
- 
-
-### Изменение статуса
- 
-
-    POST http://host/courses/{id_1}/student-status/{id_2} (Выполняется с Bearer Token)
-    id_1 = GUID курса
-    id_2 = GUID студента
-
-Пример тела запроса:
- 
-
-    {
-      "status": "Статус"
-    }
-
-Валидация:
- 
-
-    1. Проверка корректности токена
-    2. Проверка полей тела запроса
-    3. Проверка статуса. Может быть только 'Accepted', 'Declined'
-    4. Проверить, существует ли студент на курсе с таким GUID
-    5. Проверить, существует ли курс с таким GUID
-    6. Проверка прав. Изменять статус может только преподаватель курса или администратор
-
-В случае успеха возвращает:
- 
-
-    {
-        "message": "Статус успешно обновлен."
-    }
-
----
- 
-
-### Поставить оценку студенту
- 
-
-    POST http://host/courses/{id_1}/marks/{id_2} (Выполняется с Bearer Token)
-    id_1 = GUID курса
-    id_2 = GUID студента
-
-Пример тела запроса:
- 
-
-    {
-        "markType": "тип оценки",
-        "mark": "оценка"
-    }
-
-Валидация:
- 
-
-    1. Проверка корректности токена
-    2. Проверка полей тела запроса
-    3. Проверка типа оценки. Может быть только 'Midterm', 'Final'
-    4. Проверить, существует ли студент на курсе с таким GUID
-    5. Проверить, существует ли курс с таким GUID
-    6. Проверка прав. Выставлять оценки может только преподаватель курса или администратор
-    7. Оценка может принимать значения 'NotDefined', 'Passed', 'Failed'
-    8. Проверка, что студент зачислен на курс
-
-В случае успеха возвращает:
- 
-
-    {
-        "message": "Оценка успешно обновлена."
-    }
-
----
- 
-
-### Просмотр курсов, где пользователь студент
- 
-
-    GET http://host/courses/my (Выполняется с Bearer Token)
-
-Валидация:
- 
-
-    Проверка корректности токена
-
-В случае успеха возвращает:
- 
-
-    [
-        {
-            "id": "GUID курса",
-            "name": "Имя курса",
-            "startYear": ГГГГ,
-            "maximumStudentsCount": N,
-            "remainingSlotsCount": N,
-            "status": "Статус курса",
-            "semester": "Семестр"
-        }, ...
-    ]
-
----
- 
-
-### Просмотр курсов, где пользователь преподаватель
- 
-
-    GET http://host/courses/teaching (Выполняется с Bearer Token)
-
-Валидация:
- 
-
-    Проверка корректности токена
-
-В случае успеха возвращает:
- 
-
-    [
-        {
-            "id": "GUID курса",
-            "name": "Имя курса",
-            "startYear": ГГГГ,
-            "maximumStudentsCount": N,
-            "remainingSlotsCount": N,
-            "status": "Статус курса",
-            "semester": "Семестр"
-        }, ...
-    ]
-
----
- 
-
-### Изменение требований и аннотаций
- 
-
-    PUT http://host/courses/{id}/requirements-and-annotations (Выполняется с Bearer Token)
-    id = GUID курса
-
-Пример тела запроса:
- 
-
-    {
-        "requirements": "Требования",
-        "annotations": "Аннотации"
-    }
-
-Валидация:
- 
-
-    1. Проверка корректности токена
-    2. Проверка поля requirements
-    3. Проверка поля annotations
-    4. Проверка тела запроса
-    5. Проверка прав доступа
-
-В случае успеха возвращает:
- 
-
-    {
-        "message": "Аннотации успешно обновлены."
-    }
-
----
- 
-
-### Изменение курса
- 
-
-    PUT http://host/courses/{id} (Выполняется с Bearer Token)
-    id = GUID курса
-
-Пример тела запроса:
- 
-
-    {
-        "name": "Имя курса",
-        "startYear": ГГГГ,
-        "maximumStudentsCount": N,
-        "semester": "Семестр",
-        "requirements": "Требования",
-        "annotations": "Аннотации",
-        "mainTeacherId": "ID преподавателя"
-    }
-
-Валидация:
- 
-
-    1. Проверка корректности токена
-    2. Проверка поля name (1 имя = 1 курс в группе)
-    3. Проверка поля startYear (год начала не меньше текущего)
-    4. Проверка поля semester ('Autumn', 'Spring')
-    5. Проверка поля requirements
-    6. Проверка поля annotations
-    7. Проверка поля mainTeacherId (пользователь существует)
-    8. Проверка прав доступа
-    
-    P.s. maximumStudentsCount поле валидируется только на условие положительного числа. maximumStudentsCount может быть меньше, чем студентов на курсе
-
-В случае успеха возвращает:
- 
-
-    {
-        "message": "Курс успешно обновлен."
-    }
-
----
- 
-
-### Удаление курса
- 
-
-    DELETE http://host/courses/{id} (Выполняется с Bearer Token)
-    id = GUID курса
-
-Валидация:
- 
-
-    1. Проверка корректности токена
-    2. Проверка прав доступа
-    3. Проверка существования курса
-
-В случае успеха возвращает:
- 
-
-    {
-        "message": "Курс, студенты курса, преподаватели курса и уведомления курса удалены!"
-    }
-
----
- 
-
-### Удаление преподавателя курса
- 
-
-    DELETE http://host/courses/{id_1}/{id_2} (Выполняется с Bearer Token)
-    id_1 = GUID группы
-    id_2 = GUID преподавателя
-
-Валидация:
- 
-
-    1. Проверка корректности токена
-    2. Проверка прав доступа
-    3. Проверка существования курса
-    3. Проверка существования преподавателя
-
-В случае успеха возвращает:
- 
-
-    {
-        "message": "Преподаватель удален."
-    }
-
-## Отчеты
- 
-
-### Вывод всех пользователей
- 
-
-    GET http://host/users (Выполняется с Bearer Token)
-
-Валидация:
- 
-
-    Проверка корректности токена
-
-В случае успеха возвращает:
- 
-
-    [
-        {
-            "id": "GUID пользователя",
-            "name": "Имя пользователя",
-            "email": "domain@domain.domain"
-        }, ...
-    ]
-
----
- 
-
-### Вывод ролей пользователя
- 
-
-    GET http://host/roles (Выполняется с Bearer Token)
-
-Валидация:
- 
-
-    Проверка корректности токена
-
-В случае успеха возвращает:
- 
-
-    [
-        {
-            "Admin": "false"
-        },
-        {
-            "Course id": "GUID курса",
-            "Main teacher": false,
-            "Base teacher": false,
-            "Student": true
-        }, ...
-    ]
-
----
- 
-
-### Вывод отчета
- 
-
-    GET http://host/report (Выполняется с Bearer Token)
-
-Валидация:
- 
-
-    1. Проверка корректности токена
-    2. Проверка прав доступа
-
-В случае успеха возвращает:
- 
-
-    [
-        {
-            "fullName": "Имя преподавателя",
-            "id": "GUID преподавателя",
-            "campusGroupReports": [
-                {
-                    "name": "Имя курса",
-                    "id": "GUID курса",
-                    "averagePassed": N,
-                    "averageFailed": N
-                }, ...
-            ]
-        },.
-    ]
-
----
- 
-
-## Настоящая история коммитов
- 
+    },.
+]
+```
+
+## The real history of commits
 <p align="center">
 <img src="https://github.com/IvanArsenev/PHP_backend_project/blob/main/img/real_commit_story.png?raw=true"  />
 <p>
